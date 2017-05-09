@@ -1,0 +1,6 @@
+{
+  "src": {
+    "tagName": "v%s",
+    "commitMessage": "Prepared to release %s."
+  }
+}
