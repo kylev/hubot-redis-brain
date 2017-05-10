@@ -27,7 +27,7 @@
     "sinon": "^1.13.0",
     "sinon-chai": "^2.7.0"
   },
-  "main": "index.coffee",
+  "main": "src/redis-brain.coffee",
   "scripts": {
     "test": "mocha --compilers coffee:coffee-script"
   }
