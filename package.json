@@ -19,10 +19,10 @@
     "hubot": "2.x"
   },
   "devDependencies": {
-    "chai": "^2.1.1",
+    "chai": "3.5.0",
     "coffee-script": "1.6.3",
     "hubot": "2.x",
-    "mocha": "^2.1.0",
+    "mocha": "3.3.0",
     "release-it": "^2.7.3"
   },
   "main": "src/redis-brain.coffee",
