@@ -4,7 +4,7 @@
   "version": "0.0.3",
   "author": "Josh Nichols <technicalpickles@github.com>",
   "license": "MIT",
-  "keywords": "hubot, hubot-scripts",
+  "keywords": ["hubot", "hubot-scripts", "hubot-brain"],
   "repository": {
     "type": "git",
     "url": "git://github.com/hubot-scripts/hubot-redis-brain.git"
