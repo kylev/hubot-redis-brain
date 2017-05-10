@@ -2,46 +2,35 @@
 #   Persist hubot's brain to redis
 #
 # Configuration:
-#   REDISTOGO_URL or REDISCLOUD_URL or BOXEN_REDIS_URL or REDIS_URL.
-#   URL format: redis://<host>:<port>[/<brain_prefix>]
-#   If not provided, '<brain_prefix>' will default to 'hubot'.
+#   HUBOT_REDIS_BRAIN_URL - The redis connection URL passed to the driver. See the redis npm
+#     module for documentation. Default: "redis://localhost:6379"
+#   HUBOT_REDIS_BRAIN_PREFIX - The key prefix used when storing data in redis. Default: "hubot:"
 #
 # Commands:
 #   None
 
-Url   = require "url"
 Redis = require "redis"
 
+warnOldEnv = (robot, env) ->
+  oldKeys = ['REDISTOGO_URL', 'REDISCLOUD_URL', 'BOXEN_REDIS_URL', 'REDIS_URL']
+  deprecatedUses = oldKeys.filter (o) -> env[o]
+
+  if deprecatedUses.length > 0
+    robot.logger.warning("Ignoring old environment variables %s; use HUBOT_REDIS_BRAIN_URL", deprecatedUses)
+
 module.exports = (robot) ->
-  redisUrl = if process.env.REDISTOGO_URL?
-               redisUrlEnv = "REDISTOGO_URL"
-               process.env.REDISTOGO_URL
-             else if process.env.REDISCLOUD_URL?
-               redisUrlEnv = "REDISCLOUD_URL"
-               process.env.REDISCLOUD_URL
-             else if process.env.BOXEN_REDIS_URL?
-               redisUrlEnv = "BOXEN_REDIS_URL"
-               process.env.BOXEN_REDIS_URL
-             else if process.env.REDIS_URL?
-               redisUrlEnv = "REDIS_URL"
-               process.env.REDIS_URL
-             else
-               'redis://localhost:6379'
+  warnOldEnv(robot, process.env)
+  unless process.env.HUBOT_REDIS_BRAIN_URL
+    robot.logger.info("HUBOT_REDIS_BRAIN_URL unset, using default")
 
-  if redisUrlEnv?
-    robot.logger.info "hubot-redis-brain: Discovered redis from #{redisUrlEnv} environment variable"
-  else
-    robot.logger.info "hubot-redis-brain: Using default redis on localhost:6379"
-
-
-  info   = Url.parse redisUrl, true
-  client = if info.auth then Redis.createClient(info.port, info.hostname, {no_ready_check: true}) else Redis.createClient(info.port, info.hostname)
-  prefix = info.path?.replace('/', '') or 'hubot'
+  url = process.env.HUBOT_REDIS_BRAIN_URL || 'redis://localhost:6379'
+  prefix =  process.env.HUBOT_REDIS_BRAIN_PREFIX || 'hubot:'
+  client = Redis.createClient(url, no_ready_check: true, prefix: prefix)
 
   robot.brain.setAutoSave false
 
   getData = ->
-    client.get "#{prefix}:storage", (err, reply) ->
+    client.get "storage", (err, reply) ->
       if err
         throw err
       else if reply
@@ -53,14 +42,6 @@ module.exports = (robot) ->
 
       robot.brain.setAutoSave true
 
-  if info.auth
-    client.auth info.auth.split(":")[1], (err) ->
-      if err
-        robot.logger.error "hubot-redis-brain: Failed to authenticate to Redis"
-      else
-        robot.logger.info "hubot-redis-brain: Successfully authenticated to Redis"
-        getData()
-
   client.on "error", (err) ->
     if /ECONNREFUSED/.test err.message
 
@@ -69,10 +50,10 @@ module.exports = (robot) ->
 
   client.on "connect", ->
     robot.logger.debug "hubot-redis-brain: Successfully connected to Redis"
-    getData() if not info.auth
+    getData()
 
   robot.brain.on 'save', (data = {}) ->
-    client.set "#{prefix}:storage", JSON.stringify data
+    client.set "storage", JSON.stringify data
 
   robot.brain.on 'close', ->
     client.quit()
