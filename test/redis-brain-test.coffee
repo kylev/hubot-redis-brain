@@ -1,8 +1,4 @@
-chai = require 'chai'
-sinon = require 'sinon'
-chai.use require 'sinon-chai'
-
-expect = chai.expect
+expect = require('chai').expect
 
 describe 'redis-brain', ->
   it 'exports a function', ->
